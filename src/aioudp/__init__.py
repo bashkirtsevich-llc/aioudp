@@ -48,6 +48,9 @@ class UDPServer():
             data, addr = self.sock.recvfrom(self.recv_max_size)
         except (BlockingIOError, InterruptedError):
             self.loop.add_reader(fd, self._sock_recv, fut, True)
+        except Exception as e:
+            fut.set_result(0)
+            self.socket_error(e)
         else:
             fut.set_result((data, addr))
 
@@ -69,6 +72,9 @@ class UDPServer():
             bytes_sent = self.sock.sendto(data, addr)
         except (BlockingIOError, InterruptedError):
             self.loop.add_writer(fd, self._sock_send, data, addr, fut, True)
+        except Exception as e:
+            fut.set_result(0)
+            self.socket_error(e)
         else:
             fut.set_result(bytes_sent)
 
@@ -96,6 +102,9 @@ class UDPServer():
             await self._throttle(len(data), self.download_speed)
 
     def connection_made(self):
+        pass
+
+    def socket_error(self, e):
         pass
 
     async def datagram_received(self, data, addr):
