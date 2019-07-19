@@ -25,8 +25,8 @@ class UDPServer():
 
         self.connection_made()
 
-        asyncio.ensure_future(self._send_periodically(), loop=self.loop)
-        asyncio.ensure_future(self._recv_periodically(), loop=self.loop)
+        self._run_future(self._send_periodically())
+        self._run_future(self._recv_periodically())
 
         if not loop:
             self.loop.run_forever()
@@ -34,6 +34,9 @@ class UDPServer():
     def send(self, data, addr):
         self.send_queue.append((data, addr))
         self.send_event.set()
+
+    def _run_future(self, coro_or_future):
+        asyncio.ensure_future(coro_or_future, loop=self.loop)
 
     def _sock_recv(self, fut=None, registered=False):
         fd = self.sock.fileno()
@@ -98,7 +101,7 @@ class UDPServer():
     async def _recv_periodically(self):
         while True:
             data, addr = await self._sock_recv()
-            asyncio.ensure_future(self.datagram_received(data, addr), loop=self.loop)
+            self._run_future(self.datagram_received(data, addr))
             await self._throttle(len(data), self.download_speed)
 
     def connection_made(self):
