@@ -5,7 +5,7 @@ with open("README.md") as f:
 
 setup(
     name="aio-udp-server",
-    version="0.0.2",
+    version="0.0.4",
     description="Asyncio UDP server with traffic throttling",
     long_description=long_description,
     long_description_content_type="text/markdown",
