@@ -92,7 +92,7 @@ class UDPServer():
             await self.send_event.wait()
             try:
                 while self.send_queue:
-                    data, addr = self.send_queue.pop()
+                    data, addr = self.send_queue.pop(0)
                     bytes_sent = await self._sock_send(data, addr)
                     await self._throttle(bytes_sent, self.upload_speed)
             finally:
