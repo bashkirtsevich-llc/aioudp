@@ -1,5 +1,6 @@
 import asyncio
 import socket
+from collections import deque
 
 
 class UDPServer():
@@ -13,7 +14,7 @@ class UDPServer():
         self.sock.setblocking(False)
 
         self.send_event = asyncio.Event()
-        self.send_queue = list()
+        self.send_queue = deque()
 
         self.bytes_send = 0
         self.bytes_recv = 0
@@ -92,7 +93,7 @@ class UDPServer():
             await self.send_event.wait()
             try:
                 while self.send_queue:
-                    data, addr = self.send_queue.pop(0)
+                    data, addr = self.send_queue.popleft()
                     bytes_sent = await self._sock_send(data, addr)
                     await self._throttle(bytes_sent, self.upload_speed)
             finally:
