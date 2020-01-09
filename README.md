@@ -23,7 +23,7 @@ Server startup function.
 Arguments:
 * `host` — socket bind host/interface (e.g. "0.0.0.0", "127.0.0.1" or "localhost");
 * `port` — socket listen port;
-* `loop` — event loop (_optional_).
+* `loop` — event loop.
 
 
 ## `UDPServer.send`
@@ -35,24 +35,48 @@ Arguments:
 * `addr` — tuple of host and port (e.g. `("127.0.0.1", 9876)` or `("some.domain.com", 5556)`).
 
 
-## Events
+## `UDPServer.subscribe`
 
-* `UDPServer.connection_made()` — virtual method, call after socket bind successfully.
-* `UDPServer.datagram_received(data, addr)` — async virtual method, call each time when server got incoming data. 
+Subscribe coro or future on a datagram received event.
+
+Arguments:
+* `fut` — coroutine or future with arguments `data` and `addr`.
+
+
+## `UDPServer.unsubscribe`
+
+Unsubscribe coro or future from a datagram received event.
+
+Arguments:
+* `fut` — coroutine or future.
+
+
+## Virtual events
+
+* `UDPServer._connection_made()` — virtual method, call after socket bind successfully;
+* `UDPServer._socket_error(data, addr)` — virtual method, call when got socket error;
+* `UDPServer._datagram_received(data, addr)` — virtual method, call each time when server got incoming data, can be used for modify data before pass it to subscribers;
+* `UDPServer._notify_subscribers(data, addr)` — virtual method, call with params returned from `_datagram_received`. 
 
 
 ## Example
 
 ```python
+import asyncio
 import datetime
 
+from aioudp import UDPServer
 
-class MyUDPServer(UDPServer):
-    def connection_made(self):
-        # Start intense sending
+
+class MyUDPServer:
+    def __init__(self, server, loop):
+        self.server = server
+        self.loop = loop
+        # Subscribe for incoming udp packet event
+        self.server.subscribe(self.on_datagram_received)
         asyncio.ensure_future(self.do_send(), loop=self.loop)
 
-    async def datagram_received(self, data, addr):
+    async def on_datagram_received(self, data, addr):
         # Override virtual method and process incoming data
         print(datetime.datetime.now(), addr, data)
 
@@ -63,13 +87,20 @@ class MyUDPServer(UDPServer):
             # Delay for prevent tasks concurency
             await asyncio.sleep(0.001)
             # Enqueue data for send
-            self.send(payload, ("router.bittorrent.com", 6881))
+            self.server.send(payload, ("router.bittorrent.com", 6881))
 
+async def main(loop):
+    # Bandwidth speed is 100 bytes per second
+    udp = UDPServer(download_speed=100, upload_speed=100)
+    udp.run("0.0.0.0", 12346, loop=loop)
+
+    server = MyUDPServer(server=udp, loop=loop)
+   
 
 if __name__ == '__main__':
-    # Bandwidth speed is 100 bytes per second
-    server = MyUDPServer(download_speed=100, upload_speed=100)
-    server.run("0.0.0.0", 12346)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main(loop))
+    loop.run_forever()
 ```
 
 Output:
