@@ -1,8 +1,9 @@
 name: Upload Python Package
 
-on:
-  master:
-    types: [published]
+on: 
+  push:
+    branches:
+      - master
 
 jobs:
   deploy:
