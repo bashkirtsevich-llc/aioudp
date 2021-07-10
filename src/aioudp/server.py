@@ -35,6 +35,9 @@ class UDPServer():
         self._subscribers.pop(id(fut), None)
 
     def send(self, data, addr):
+        if not isinstance(data, (bytes, bytearray)):
+            raise TypeError("Param 'data' should be bytes or bytearray type")
+
         self._send_queue.append((data, addr))
         self._send_event.set()
 
@@ -58,7 +61,7 @@ class UDPServer():
         except (BlockingIOError, InterruptedError):
             self.loop.add_reader(fd, self._sock_recv, fut, True)
         except Exception as e:
-            fut.set_result(0)
+            fut.set_exception(e)
             self._socket_error(e)
         else:
             fut.set_result((data, addr))
@@ -82,7 +85,7 @@ class UDPServer():
         except (BlockingIOError, InterruptedError):
             self.loop.add_writer(fd, self._sock_send, data, addr, fut, True)
         except Exception as e:
-            fut.set_result(0)
+            fut.set_exception(e)
             self._socket_error(e)
         else:
             fut.set_result(bytes_sent)
