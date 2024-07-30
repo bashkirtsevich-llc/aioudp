@@ -28,6 +28,12 @@ class UDPServer():
 
         self._run_future(self._send_periodically(), self._recv_periodically())
 
+    def setsockopt(self, level, optname, value = None, optlen = None):
+        if value is not None and optlen is None:
+            self._sock.setsockopt(level, optname, value)
+        elif value is None and optlen is not None:
+            self._sock.setsockopt(level, optname, optlen, optlen)
+
     def subscribe(self, fut):
         self._subscribers[id(fut)] = fut
 
