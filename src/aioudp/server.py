@@ -32,7 +32,7 @@ class UDPServer():
         if value is not None and optlen is None:
             self._sock.setsockopt(level, optname, value)
         elif value is None and optlen is not None:
-            self._sock.setsockopt(level, optname, optlen, optlen)
+            self._sock.setsockopt(level, optname, value, optlen)
 
     def subscribe(self, fut):
         self._subscribers[id(fut)] = fut
